@@ -1,4 +1,5 @@
 """Tests for `pgsync` package."""
+
 import mock
 import pytest
 
@@ -99,7 +100,9 @@ class TestRoot(object):
                 "_id": "abc",
                 "_index": "testdb",
                 "_source": {
-                    "_meta": {},
+                    "_meta": {
+                        "book": {"isbn": ["abc"]},
+                    },
                     "description": "Tigers are fierce creatures",
                     "isbn": "abc",
                     "title": "The Tiger Club",
@@ -109,7 +112,9 @@ class TestRoot(object):
                 "_id": "def",
                 "_index": "testdb",
                 "_source": {
-                    "_meta": {},
+                    "_meta": {
+                        "book": {"isbn": ["def"]},
+                    },
                     "description": "Lion and the mouse",
                     "isbn": "def",
                     "title": "The Lion Club",
@@ -119,7 +124,7 @@ class TestRoot(object):
                 "_id": "ghi",
                 "_index": "testdb",
                 "_source": {
-                    "_meta": {},
+                    "_meta": {"book": {"isbn": ["ghi"]}},
                     "description": "Rabbits on the run",
                     "isbn": "ghi",
                     "title": "The Rabbit Club",
@@ -150,7 +155,9 @@ class TestRoot(object):
                 "_id": "abc",
                 "_index": "testdb",
                 "_source": {
-                    "_meta": {},
+                    "_meta": {
+                        "book": {"isbn": ["abc"]},
+                    },
                     "description": "Tigers are fierce creatures",
                     "book_isbn": "abc",
                     "book_title": "The Tiger Club",
@@ -160,7 +167,9 @@ class TestRoot(object):
                 "_id": "def",
                 "_index": "testdb",
                 "_source": {
-                    "_meta": {},
+                    "_meta": {
+                        "book": {"isbn": ["def"]},
+                    },
                     "description": "Lion and the mouse",
                     "book_isbn": "def",
                     "book_title": "The Lion Club",
@@ -170,7 +179,7 @@ class TestRoot(object):
                 "_id": "ghi",
                 "_index": "testdb",
                 "_source": {
-                    "_meta": {},
+                    "_meta": {"book": {"isbn": ["ghi"]}},
                     "description": "Rabbits on the run",
                     "book_isbn": "ghi",
                     "book_title": "The Rabbit Club",
@@ -337,19 +346,19 @@ class TestRoot(object):
 
         assert sources == {
             "abc": {
-                "_meta": {},
+                "_meta": {"book": {"isbn": ["abc"]}},
                 "copyright": None,
                 "description": "Tigers are fierce creatures",
                 "isbn": "abc",
             },
             "def": {
-                "_meta": {},
+                "_meta": {"book": {"isbn": ["def"]}},
                 "copyright": None,
                 "description": "Lion and the mouse",
                 "isbn": "def",
             },
             "ghi": {
-                "_meta": {},
+                "_meta": {"book": {"isbn": ["ghi"]}},
                 "copyright": None,
                 "description": "Rabbits on the run",
                 "isbn": "ghi",
@@ -365,9 +374,9 @@ class TestRoot(object):
         docs = [doc for doc in sync.sync()]
         sources = {doc["_id"]: doc["_source"] for doc in docs}
 
-        assert sources["abc"]["_meta"] == {}
-        assert sources["def"]["_meta"] == {}
-        assert sources["ghi"]["_meta"] == {}
+        assert sources["abc"]["_meta"] == {"book": {"isbn": ["abc"]}}
+        assert sources["def"]["_meta"] == {"book": {"isbn": ["def"]}}
+        assert sources["ghi"]["_meta"] == {"book": {"isbn": ["ghi"]}}
         assert_resync_empty(sync, nodes)
 
     def test_node_include_table(self, sync, data):
@@ -406,9 +415,21 @@ class TestRoot(object):
         docs = search(sync.search_client, "testdb")
 
         assert docs == [
-            {"_meta": {}, "isbn": "abc", "title": "The Tiger Club"},
-            {"_meta": {}, "isbn": "def", "title": "The Lion Club"},
-            {"_meta": {}, "isbn": "ghi", "title": "The Rabbit Club"},
+            {
+                "_meta": {"book": {"isbn": ["abc"]}},
+                "isbn": "abc",
+                "title": "The Tiger Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["def"]}},
+                "isbn": "def",
+                "title": "The Lion Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["ghi"]}},
+                "isbn": "ghi",
+                "title": "The Rabbit Club",
+            },
         ]
 
         session = sync.session
@@ -425,10 +446,26 @@ class TestRoot(object):
         docs = search(sync.search_client, "testdb")
 
         assert docs == [
-            {"_meta": {}, "isbn": "abc", "title": "The Tiger Club"},
-            {"_meta": {}, "isbn": "cba", "title": "The Tiger Club"},
-            {"_meta": {}, "isbn": "def", "title": "The Lion Club"},
-            {"_meta": {}, "isbn": "ghi", "title": "The Rabbit Club"},
+            {
+                "_meta": {"book": {"isbn": ["abc"]}},
+                "isbn": "abc",
+                "title": "The Tiger Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["cba"]}},
+                "isbn": "cba",
+                "title": "The Tiger Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["def"]}},
+                "isbn": "def",
+                "title": "The Lion Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["ghi"]}},
+                "isbn": "ghi",
+                "title": "The Rabbit Club",
+            },
         ]
         assert_resync_empty(sync, doc.get("node", {}))
         sync.search_client.close()
@@ -449,9 +486,21 @@ class TestRoot(object):
         docs = search(sync.search_client, "testdb")
 
         assert docs == [
-            {"_meta": {}, "isbn": "abc", "title": "The Tiger Club"},
-            {"_meta": {}, "isbn": "def", "title": "The Lion Club"},
-            {"_meta": {}, "isbn": "ghi", "title": "The Rabbit Club"},
+            {
+                "_meta": {"book": {"isbn": ["abc"]}},
+                "isbn": "abc",
+                "title": "The Tiger Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["def"]}},
+                "isbn": "def",
+                "title": "The Lion Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["ghi"]}},
+                "isbn": "ghi",
+                "title": "The Rabbit Club",
+            },
         ]
 
         session = sync.session
@@ -494,9 +543,21 @@ class TestRoot(object):
         assert "abc" not in [doc["isbn"] for doc in docs]
 
         assert docs == [
-            {"_meta": {}, "isbn": "cba", "title": "The Tiger Club"},
-            {"_meta": {}, "isbn": "def", "title": "The Lion Club"},
-            {"_meta": {}, "isbn": "ghi", "title": "The Rabbit Club"},
+            {
+                "_meta": {"book": {"isbn": ["cba"]}},
+                "isbn": "cba",
+                "title": "The Tiger Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["def"]}},
+                "isbn": "def",
+                "title": "The Lion Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["ghi"]}},
+                "isbn": "ghi",
+                "title": "The Rabbit Club",
+            },
         ]
         assert_resync_empty(sync, doc.get("node", {}))
         sync.search_client.close()
@@ -517,9 +578,21 @@ class TestRoot(object):
         docs = search(sync.search_client, "testdb")
 
         assert docs == [
-            {"_meta": {}, "isbn": "abc", "title": "The Tiger Club"},
-            {"_meta": {}, "isbn": "def", "title": "The Lion Club"},
-            {"_meta": {}, "isbn": "ghi", "title": "The Rabbit Club"},
+            {
+                "_meta": {"book": {"isbn": ["abc"]}},
+                "isbn": "abc",
+                "title": "The Tiger Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["def"]}},
+                "isbn": "def",
+                "title": "The Lion Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["ghi"]}},
+                "isbn": "ghi",
+                "title": "The Rabbit Club",
+            },
         ]
         with subtransactions(session):
             session.execute(
@@ -534,10 +607,26 @@ class TestRoot(object):
         docs = search(sync.search_client, "testdb")
 
         assert docs == [
-            {"_meta": {}, "isbn": "abc", "title": "The Tiger Club"},
-            {"_meta": {}, "isbn": "def", "title": "The Lion Club"},
-            {"_meta": {}, "isbn": "ghi", "title": "The Rabbit Club"},
-            {"_meta": {}, "isbn": "xyz", "title": "Encyclopedia"},
+            {
+                "_meta": {"book": {"isbn": ["abc"]}},
+                "isbn": "abc",
+                "title": "The Tiger Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["def"]}},
+                "isbn": "def",
+                "title": "The Lion Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["ghi"]}},
+                "isbn": "ghi",
+                "title": "The Rabbit Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["xyz"]}},
+                "isbn": "xyz",
+                "title": "Encyclopedia",
+            },
         ]
         assert_resync_empty(sync, doc.get("node", {}))
         sync.search_client.close()
@@ -558,9 +647,21 @@ class TestRoot(object):
         docs = search(sync.search_client, "testdb")
 
         assert docs == [
-            {"_meta": {}, "isbn": "abc", "title": "The Tiger Club"},
-            {"_meta": {}, "isbn": "def", "title": "The Lion Club"},
-            {"_meta": {}, "isbn": "ghi", "title": "The Rabbit Club"},
+            {
+                "_meta": {"book": {"isbn": ["abc"]}},
+                "isbn": "abc",
+                "title": "The Tiger Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["def"]}},
+                "isbn": "def",
+                "title": "The Lion Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["ghi"]}},
+                "isbn": "ghi",
+                "title": "The Rabbit Club",
+            },
         ]
 
         with subtransactions(session):
@@ -576,9 +677,21 @@ class TestRoot(object):
         docs = search(sync.search_client, "testdb")
 
         assert docs == [
-            {"_meta": {}, "isbn": "abc", "title": "Tiger Club"},
-            {"_meta": {}, "isbn": "def", "title": "The Lion Club"},
-            {"_meta": {}, "isbn": "ghi", "title": "The Rabbit Club"},
+            {
+                "_meta": {"book": {"isbn": ["abc"]}},
+                "isbn": "abc",
+                "title": "Tiger Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["def"]}},
+                "isbn": "def",
+                "title": "The Lion Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["ghi"]}},
+                "isbn": "ghi",
+                "title": "The Rabbit Club",
+            },
         ]
         assert_resync_empty(sync, doc.get("node", {}))
         sync.search_client.close()
@@ -599,9 +712,21 @@ class TestRoot(object):
         docs = search(sync.search_client, "testdb")
 
         assert docs == [
-            {"_meta": {}, "isbn": "abc", "title": "The Tiger Club"},
-            {"_meta": {}, "isbn": "def", "title": "The Lion Club"},
-            {"_meta": {}, "isbn": "ghi", "title": "The Rabbit Club"},
+            {
+                "_meta": {"book": {"isbn": ["abc"]}},
+                "isbn": "abc",
+                "title": "The Tiger Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["def"]}},
+                "isbn": "def",
+                "title": "The Lion Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["ghi"]}},
+                "isbn": "ghi",
+                "title": "The Rabbit Club",
+            },
         ]
 
         def pull():
@@ -638,9 +763,21 @@ class TestRoot(object):
         docs = search(sync.search_client, "testdb")
 
         assert docs == [
-            {"_meta": {}, "isbn": "abc", "title": "Tiger Club"},
-            {"_meta": {}, "isbn": "def", "title": "The Lion Club"},
-            {"_meta": {}, "isbn": "ghi", "title": "The Rabbit Club"},
+            {
+                "_meta": {"book": {"isbn": ["abc"]}},
+                "isbn": "abc",
+                "title": "Tiger Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["def"]}},
+                "isbn": "def",
+                "title": "The Lion Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["ghi"]}},
+                "isbn": "ghi",
+                "title": "The Rabbit Club",
+            },
         ]
         assert_resync_empty(sync, doc.get("node", {}))
         sync.search_client.close()
@@ -659,9 +796,21 @@ class TestRoot(object):
         docs = search(sync.search_client, "testdb")
 
         assert docs == [
-            {"_meta": {}, "isbn": "abc", "title": "The Tiger Club"},
-            {"_meta": {}, "isbn": "def", "title": "The Lion Club"},
-            {"_meta": {}, "isbn": "ghi", "title": "The Rabbit Club"},
+            {
+                "_meta": {"book": {"isbn": ["abc"]}},
+                "isbn": "abc",
+                "title": "The Tiger Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["def"]}},
+                "isbn": "def",
+                "title": "The Lion Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["ghi"]}},
+                "isbn": "ghi",
+                "title": "The Rabbit Club",
+            },
         ]
 
         def pull():
@@ -698,8 +847,16 @@ class TestRoot(object):
         docs = search(sync.search_client, "testdb")
 
         assert docs == [
-            {"_meta": {}, "isbn": "def", "title": "The Lion Club"},
-            {"_meta": {}, "isbn": "ghi", "title": "The Rabbit Club"},
+            {
+                "_meta": {"book": {"isbn": ["def"]}},
+                "isbn": "def",
+                "title": "The Lion Club",
+            },
+            {
+                "_meta": {"book": {"isbn": ["ghi"]}},
+                "isbn": "ghi",
+                "title": "The Rabbit Club",
+            },
         ]
         assert_resync_empty(sync, doc.get("node", {}))
         sync.search_client.close()

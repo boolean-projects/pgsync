@@ -1,4 +1,5 @@
 """PGSync Node class representation."""
+
 from __future__ import annotations
 
 import re
@@ -283,6 +284,7 @@ class Tree(threading.local):
     def __post_init__(self):
         self.tables: t.Set[str] = set()
         self.__nodes: t.Dict[Node] = {}
+        self.__schemas: t.Set[str] = set()
         self.root: t.Optional[Node] = None
         self.build(self.nodes)
 
@@ -333,6 +335,7 @@ class Tree(threading.local):
             node.add_child(self.build(child))
 
         self.__nodes[key] = node
+        self.__schemas.add(schema)
         return node
 
     def get_node(self, table: str, schema: str) -> Node:
@@ -351,3 +354,7 @@ class Tree(threading.local):
             else:
                 raise RuntimeError(f"Node for {schema}.{table} not found")
         return self.__nodes[key]
+
+    @property
+    def schemas(self) -> t.Set[str]:
+        return self.__schemas

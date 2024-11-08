@@ -1,4 +1,5 @@
 """PGSync Base."""
+
 import logging
 import os
 import typing as t
@@ -474,7 +475,7 @@ class Base(object):
         func: sa.sql.functions._FunctionGenerator,
         txmin: t.Optional[int] = None,
         txmax: t.Optional[int] = None,
-        upto_lsn: t.Optional[int] = None,
+        upto_lsn: t.Optional[str] = None,
         upto_nchanges: t.Optional[int] = None,
         limit: t.Optional[int] = None,
         offset: t.Optional[int] = None,
@@ -487,7 +488,7 @@ class Base(object):
             func (sa.sql.functions._FunctionGenerator): The function to use to read from the slot.
             txmin (Optional[int], optional): The minimum transaction ID to read from. Defaults to None.
             txmax (Optional[int], optional): The maximum transaction ID to read from. Defaults to None.
-            upto_lsn (Optional[int], optional): The maximum LSN to read up to. Defaults to None.
+            upto_lsn (Optional[str], optional): The maximum LSN to read up to. Defaults to None.
             upto_nchanges (Optional[int], optional): The maximum number of changes to read. Defaults to None.
             limit (Optional[int], optional): The maximum number of rows to return. Defaults to None.
             offset (Optional[int], optional): The number of rows to skip before returning. Defaults to None.
@@ -530,12 +531,20 @@ class Base(object):
             statement = statement.offset(offset)
         return statement
 
+    @property
+    def current_wal_lsn(self) -> str:
+        return self.fetchone(
+            sa.select(sa.func.MAX(sa.text("pg_current_wal_lsn"))).select_from(
+                sa.func.PG_CURRENT_WAL_LSN()
+            )
+        )[0]
+
     def logical_slot_get_changes(
         self,
         slot_name: str,
         txmin: t.Optional[int] = None,
         txmax: t.Optional[int] = None,
-        upto_lsn: t.Optional[int] = None,
+        upto_lsn: t.Optional[str] = None,
         upto_nchanges: t.Optional[int] = None,
         limit: t.Optional[int] = None,
         offset: t.Optional[int] = None,
@@ -565,7 +574,7 @@ class Base(object):
         slot_name: str,
         txmin: t.Optional[int] = None,
         txmax: t.Optional[int] = None,
-        upto_lsn: t.Optional[int] = None,
+        upto_lsn: t.Optional[str] = None,
         upto_nchanges: t.Optional[int] = None,
         limit: t.Optional[int] = None,
         offset: t.Optional[int] = None,
@@ -591,7 +600,7 @@ class Base(object):
         slot_name: str,
         txmin: t.Optional[int] = None,
         txmax: t.Optional[int] = None,
-        upto_lsn: t.Optional[int] = None,
+        upto_lsn: t.Optional[str] = None,
         upto_nchanges: t.Optional[int] = None,
     ) -> int:
         statement: sa.sql.Select = self._logical_slot_changes(
@@ -771,6 +780,8 @@ class Base(object):
 
         NB: All integers are long in python3 and call to convert is just int
         """
+        if self.verbose:
+            logger.debug(f"type: {type_} value: {value}")
         if value.lower() == "null":
             return None
         if type_.lower() in self.INT_TYPES:

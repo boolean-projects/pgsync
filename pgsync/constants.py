@@ -89,6 +89,7 @@ ELASTICSEARCH_TYPES = [
     "constant_keyword",
     "date",
     "date_range",
+    "dense_vector",
     "double",
     "double_range",
     "flattened",
@@ -207,5 +208,5 @@ LOGICAL_SLOT_PREFIX = re.compile(
     r"table\s\"?(?P<schema>[\w-]+)\"?.\"?(?P<table>[\w-]+)\"?:\s(?P<tg_op>[A-Z]+):"  # noqa E501
 )
 LOGICAL_SLOT_SUFFIX = re.compile(
-    '\s(?P<key>"?\w+"?)\[(?P<type>[\w\s]+)\]:(?P<value>[\w\'"\-]+)'
+    r'\s(?P<key>"?\w+"?)\[(?P<type>[\w\s]+)\]:(?P<value>(?:"[^"]*"|\'[^\']*\'|null|\d+e[+-]?\d+|\w+))'
 )

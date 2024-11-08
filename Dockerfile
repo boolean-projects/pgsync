@@ -7,6 +7,8 @@ WORKDIR $WORKDIR
 ADD . ${WORKDIR}
 RUN pip install ${WORKDIR}
 COPY ./docker/wait-for-it.sh wait-for-it.sh
+ARG EXAMPLE_NAME=airbnb
+ENV EXAMPLE_NAME=$EXAMPLE_NAME
 COPY ./docker/runserver.sh runserver.sh
 COPY ./docker/start.sh start.sh
 RUN chmod +x wait-for-it.sh

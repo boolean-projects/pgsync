@@ -1,4 +1,5 @@
 """PGSync QueryBuilder."""
+
 import threading
 import typing as t
 from collections import defaultdict
@@ -19,6 +20,23 @@ class QueryBuilder(threading.local):
         self.verbose: bool = verbose
         self.isouter: bool = True
         self._cache: dict = {}
+
+    def _eval_expression(
+        self, expression: sa.sql.elements.BinaryExpression
+    ) -> sa.sql.elements.BinaryExpression:
+        if isinstance(
+            expression.left.type, sa.dialects.postgresql.UUID
+        ) or isinstance(expression.right.type, sa.dialects.postgresql.UUID):
+            if not isinstance(
+                expression.left.type, sa.dialects.postgresql.UUID
+            ) or not isinstance(
+                expression.right.type, sa.dialects.postgresql.UUID
+            ):
+                # handle UUID typed expressions:
+                # psycopg2.errors.UndefinedFunction: operator does not exist: uuid = integer
+                return expression.left is None
+
+        return expression
 
     def _build_filters(
         self, filters: t.Dict[str, t.List[dict]], node: Node
@@ -45,7 +63,11 @@ class QueryBuilder(threading.local):
                 for values in filters.get(node.table):
                     where: t.List = []
                     for column, value in values.items():
-                        where.append(node.model.c[column] == value)
+                        where.append(
+                            self._eval_expression(
+                                node.model.c[column] == value
+                            )
+                        )
                     # and clause is applied for composite primary keys
                     clause.append(sa.and_(*where))
                 return sa.or_(*clause)

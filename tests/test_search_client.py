@@ -1,4 +1,5 @@
 """SearchClient tests."""
+
 import importlib
 
 import elastic_transport
@@ -105,7 +106,7 @@ class TestSearchClient(object):
                             mock_search_client.assert_called_once_with(
                                 hosts=[url],
                                 http_auth=ANY,
-                                use_ssl=True,
                                 verify_certs=True,
                                 node_class=elastic_transport.RequestsHttpNode,
+                                timeout=settings.ELASTICSEARCH_TIMEOUT,
                             )

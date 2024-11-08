@@ -433,12 +433,12 @@ class TestBase(object):
             assert "No match for row:" in str(excinfo.value)
 
         row = """
-        table public."B1_XYZ": INSERT: "ID"[integer]:5 "CREATED_TIMESTAMP"[bigint]:222 "ADDRESS"[character varying]:'from3' "SOME_FIELD_KEY"[character varying]:'key3' "SOME_OTHER_FIELD_KEY"[character varying]:'issue3' "CHANNEL_ID"[integer]:3 "CHANNEL_NAME"[character varying]:'channel3' "ITEM_ID"[integer]:3 "MESSAGE"[character varying]:'message3' "RETRY"[integer]:4 "STATUS"[character varying]:'status' "SUBJECT"[character varying]:'sub3' "TIMESTAMP"[bigint]:33
+        table public."B1_XYZ": INSERT: "ID"[integer]:5 "CREATED_TIMESTAMP"[bigint]:222 "ADDRESS"[character varying]:'from3' "SOME_FIELD_KEY"[character varying]:'key3' "SOME_OTHER_FIELD_KEY"[character varying]:'issue to handle' "CHANNEL_ID"[integer]:3 "CHANNEL_NAME"[character varying]:'channel 45' "ITEM_ID"[integer]:3 "MESSAGE"[character varying]:'message3' "RETRY"[integer]:4 "STATUS"[character varying]:'status' "SUBJECT"[character varying]:'sub3' "TIMESTAMP"[bigint]:33
         """  # noqa E501
         payload = pg_base.parse_logical_slot(row)
         assert payload.data == {
             "CHANNEL_ID": 3,
-            "CHANNEL_NAME": "channel3",
+            "CHANNEL_NAME": "channel 45",
             "CREATED_TIMESTAMP": 222,
             "ADDRESS": "from3",
             "ID": 5,
@@ -446,7 +446,7 @@ class TestBase(object):
             "MESSAGE": "message3",
             "RETRY": 4,
             "SOME_FIELD_KEY": "key3",
-            "SOME_OTHER_FIELD_KEY": "issue3",
+            "SOME_OTHER_FIELD_KEY": "issue to handle",
             "STATUS": "status",
             "SUBJECT": "sub3",
             "TIMESTAMP": 33,
@@ -461,6 +461,36 @@ class TestBase(object):
         with pytest.raises(Exception) as excinfo:
             pg_base.parse_logical_slot(row)
             assert '"Unknown UNKNOWN operation for row:' in str(excinfo.value)
+
+    def test_parse_logical_slot_with_double_precision(
+        self,
+        connection,
+    ):
+        pg_base = Base(connection.engine.url.database)
+        row = """
+        table public.book: UPDATE: id[integer]:1 isbn[character varying]:'001' title[character varying]:'It' description[character varying]:'Stephens Kings It' copyright[character varying]:null tags[jsonb]:'["a", "b", "c"]' doc[jsonb]:'{"a": {"b": {"c": [0, 1, 2, 3, 4]}}, "i": 73, "x": [{"y": 0, "z": 5}, {"y": 1, "z": 6}], "bool": true, "lastname": "Judye", "firstname": "Glenda", "generation": {"name": "X"}, "nick_names": ["Beatriz", "Jean", "Carilyn", "Carol-Jean", "Sara-Ann"], "coordinates": {"lat": 21.1, "lon": 32.9}}' publisher_id[integer]:1 publish_date[timestamp without time zone]:'1980-01-01 00:00:00' quad[double precision]:2e+58
+        """  # noqa E501
+        payload = pg_base.parse_logical_slot(row)
+        assert payload.data == {
+            "copyright": None,
+            "description": "Stephens Kings It",
+            "doc": '\'{"a": {"b": {"c": [0, 1, 2, 3, 4]}}, "i": 73, "x": [{"y": 0, "z": '
+            '5}, {"y": 1, "z": 6}], "bool": true, "lastname": "Judye", '
+            '"firstname": "Glenda", "generation": {"name": "X"}, "nick_names": '
+            '["Beatriz", "Jean", "Carilyn", "Carol-Jean", "Sara-Ann"], '
+            '"coordinates": {"lat": 21.1, "lon": 32.9}}\'',
+            "id": 1,
+            "isbn": "001",
+            "publish_date": "'1980-01-01 00:00:00'",
+            "publisher_id": 1,
+            "quad": 2e58,
+            "tags": '\'["a", "b", "c"]\'',
+            "title": "It",
+        }
+        assert payload.old == {}
+        assert payload.schema == "public"
+        assert payload.table == "book"
+        assert payload.tg_op == "UPDATE"
 
     def test_fetchone(self, connection):
         pg_base = Base(connection.engine.url.database, verbose=True)

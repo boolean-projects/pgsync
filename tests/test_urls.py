@@ -1,4 +1,5 @@
 """URLS tests."""
+
 import pytest
 from mock import MagicMock, patch
 
@@ -73,6 +74,24 @@ class TestUrls(object):
             == "redis://:1234@localhost:9999/0"
         )
         assert get_redis_url(host="skynet") == "redis://skynet:6379/0"
+
+    @patch("pgsync.urls.logger")
+    def test_get_redis_url_with_username_and_password(self, mock_logger):
+        assert (
+            get_redis_url(username="kermit", password="1234")
+            == "redis://kermit:1234@localhost:6379/0"
+        )
+        mock_logger.debug.assert_called_with(
+            "Connecting to Redis with custom username and password."
+        )
+        assert (
+            get_redis_url(
+                username="kermit",
+                password="1234",
+                port=9999,
+            )
+            == "redis://kermit:1234@localhost:9999/0"
+        )
 
     @patch("pgsync.urls.logger")
     def test_get_config(self, mock_logger):

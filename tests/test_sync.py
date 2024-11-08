@@ -1,4 +1,5 @@
 """Sync tests."""
+
 import importlib
 import os
 import typing as t
@@ -81,8 +82,7 @@ class TestSync(object):
                     txmin=None,
                     txmax=None,
                     upto_nchanges=None,
-                    limit=settings.LOGICAL_SLOT_CHUNK_SIZE,
-                    offset=0,
+                    upto_lsn=None,
                 )
                 mock_sync.assert_not_called()
 
@@ -98,8 +98,7 @@ class TestSync(object):
                     txmin=None,
                     txmax=None,
                     upto_nchanges=None,
-                    limit=settings.LOGICAL_SLOT_CHUNK_SIZE,
-                    offset=0,
+                    upto_lsn=None,
                 )
                 mock_sync.assert_not_called()
 
@@ -127,8 +126,7 @@ class TestSync(object):
                         txmin=None,
                         txmax=None,
                         upto_nchanges=None,
-                        limit=settings.LOGICAL_SLOT_CHUNK_SIZE,
-                        offset=0,
+                        upto_lsn=None,
                     )
                     mock_get.assert_called_once()
                     mock_sync.assert_called_once()
@@ -355,7 +353,10 @@ class TestSync(object):
             txmin = None
             txmax = sync.txid_current - 1
             mock_get.assert_called_once_with(
-                txmin=txmin, txmax=txmax, upto_nchanges=None
+                txmin=txmin,
+                txmax=txmax,
+                upto_nchanges=settings.LOGICAL_SLOT_CHUNK_SIZE,
+                upto_lsn=ANY,
             )
             mock_logger.debug.assert_called_once_with(
                 f"pull txmin: {txmin} - txmax: {txmax}"
@@ -762,7 +763,12 @@ class TestSync(object):
     def test_create_setting(self, mock_es, sync):
         sync.create_setting()
         mock_es.assert_called_once_with(
-            "testdb", ANY, setting=None, mapping=None, routing=None
+            "testdb",
+            ANY,
+            setting=None,
+            mapping=None,
+            mappings=None,
+            routing=None,
         )
 
     @patch("pgsync.sync.Sync.teardown")
