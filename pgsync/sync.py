@@ -1,4 +1,5 @@
 """Sync module."""
+
 import asyncio
 import json
 import logging
@@ -1256,6 +1257,7 @@ class Sync(Base, metaclass=Singleton):
     @threaded
     @exception
     def status(self) -> None:
+        # this produces majority of logs
         while True:
             self._status(label="Sync")
             time.sleep(settings.LOG_INTERVAL)
@@ -1305,6 +1307,7 @@ class Sync(Base, metaclass=Singleton):
         else:
             # sync up to and produce items in the Redis cache
             if self.producer:
+                print("operating producer")
                 self.poll_db()
                 # sync up to current transaction_id
                 self.pull()
@@ -1312,6 +1315,7 @@ class Sync(Base, metaclass=Singleton):
             # start a background worker consumer thread to
             # poll Redis and populate Elasticsearch/OpenSearch
             if self.consumer:
+                print("operating consumer")
                 for _ in range(self.num_workers):
                     self.poll_redis()
 
